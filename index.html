@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SecureScan Dashboard (Integrated)</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Load React, ReactDOM, and Babel -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Load Lucide Icons as a local reference -->
+    <script type="text/babel">
+        // Icons setup
+        const Zap = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>;
+        const GitBranch = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="6" x2="6" y1="3" y2="15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 0-9 9"/></svg>;
+        const AlertTriangle = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" x2="12" y1="9" y2="13"/><line x1="12" x2="12.01" y1="17" y2="17"/></svg>;
+        const Clock = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>;
+        const Loader2 = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>;
+        const RefreshCw = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>;
+        const FolderOpen = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 14l2-2h4l2 2"/><path d="M4 10h16v10H4z"/><path d="M2 17v-7h20v7"/></svg>;
+        const Settings = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.44a2 2 0 0 1-2 2H4a2 2 0 0 0-2 2v.44a2 2 0 0 1-2 2H.22a2 2 0 0 0-2 2v.44a2 2 0 0 1-2 2H4a2 2 0 0 0 2 2v.44a2 2 0 0 1 2 2h.44a2 2 0 0 0 2 2h.44a2 2 0 0 1 2-2v-.44a2 2 0 0 0 2-2h2.22a2 2 0 0 0 2-2v-.44a2 2 0 0 1 2-2h.44a2 2 0 0 0 2-2v-.44a2 2 0 0 1-2-2h-.44a2 2 0 0 0-2-2H14a2 2 0 0 1-2-2V4a2 2 0 0 0-2-2h-.44z"/><circle cx="12" cy="12" r="3"/></svg>;
+        const X = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>;
+        const Trash2 = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>;
+
+        const { useState, useEffect, useCallback, useMemo } = React;
+
+        const API_BASE_URL = 'http://127.0.0.1:8000/api/v1';
+
+        const severityColorMap = (severity) => {
+          switch (severity) {
+            case 'Critical': return 'text-red-400 bg-red-900/50 border-red-800';
+            case 'High': return 'text-orange-400 bg-orange-900/50 border-orange-800';
+            case 'Low': return 'text-green-400 bg-green-900/50 border-green-800';
+            default: return 'text-gray-400 bg-gray-700/50 border-gray-600';
+          }
+        };
+
+        const formatTimeAgo = (timestamp) => {
+          const seconds = Math.floor((Date.now() - timestamp) / 1000);
+          let interval = seconds / 3600;
+          if (interval > 1) return Math.floor(interval) + "h ago";
+          interval = seconds / 60;
+          if (interval > 1) return Math.floor(interval) + "m ago";
+          return Math.floor(seconds) + "s ago";
+        };
+
+        const RepoCard = ({ icon, title, value, detail, color = 'text-blue-400' }) => (
+          <div className="p-6 bg-gray-800 rounded-xl shadow-lg border border-gray-700 hover:border-blue-500 transition duration-300">
+            <div className={`text-3xl ${color}`}>{icon}</div>
+            <p className="mt-2 text-sm text-gray-400 font-medium">{title}</p>
+            <div className="flex items-end justify-between">
+              <h3 className="text-4xl font-bold text-white mt-1">{value}</h3>
+              <span className="text-sm font-semibold text-gray-500">{detail}</span>
+            </div>
+          </div>
+        );
+
+        const LeakRow = ({ leak, index }) => {
+            const status = 'Pending'; 
+            const handleRemediate = () => {
+                console.log(`Action: Remediation initiated for ${leak.secret_type} in ${leak.file} at line ${leak.line}.`);
+                document.getElementById('message-box').innerText = `Remediation initiated for ${leak.secret_type}.`;
+                document.getElementById('message-box').className = 'fixed top-4 right-4 z-50 p-3 rounded-lg shadow-xl text-sm font-semibold bg-blue-600 text-white opacity-100 transition-opacity duration-300';
+                setTimeout(() => document.getElementById('message-box').className += ' opacity-0', 3000);
+            };
+
+            return (
+              <tr className="border-b border-gray-700/50 hover:bg-gray-700/30 transition duration-150">
+                <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-300 font-mono">{index + 1}</td>
+                <td className="px-4 py-3 text-xs text-gray-400 font-mono max-w-xs overflow-hidden truncate" title={leak.file}>{leak.file} (Line {leak.line})</td>
+                <td className="px-4 py-3 text-sm text-gray-200">{leak.secret_type}</td>
+                <td className="px-4 py-3">
+                  <span className={`inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full border ${severityColorMap(leak.severity)}`}>{leak.severity}</span>
+                </td>
+                <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-400">
+                  <div className="flex items-center space-x-2"><Clock className="w-4 h-4 text-yellow-400" /><span>{status}</span></div>
+                </td>
+                <td className="px-4 py-3 text-xs text-gray-500 max-w-xs overflow-hidden truncate">
+                  <code className="text-[10px] bg-gray-700/50 p-1 rounded font-mono" title={leak.excerpt}>{leak.excerpt}</code>
+                </td>
+                <td className="px-4 py-3 whitespace-nowrap">
+                  <button className="text-sm text-blue-400 hover:text-blue-300 transition duration-150" onClick={handleRemediate}>Remediate</button>
+                </td>
+              </tr>
+            );
+        };
+
+        // --- Rule Management Modal ---
+        const RuleManagementModal = ({ isOpen, onClose, onRuleChange }) => {
+            const [rules, setRules] = useState({});
+            const [isLoading, setIsLoading] = useState(false);
+            const [formState, setFormState] = useState({ id: '', pattern: '', severity: 'High', description: '' });
+            const [isEditing, setIsEditing] = useState(false);
+            const [formMessage, setFormMessage] = useState({ text: '', type: '' });
+            
+            const fetchRules = useCallback(async () => {
+                setIsLoading(true);
+                try {
+                    const response = await fetch(`${API_BASE_URL}/rules`);
+                    const data = await response.json();
+                    if (response.ok && data.status === 'success') setRules(data.rules || {});
+                } catch (err) { console.error(err); } finally { setIsLoading(false); }
+            }, []);
+
+            useEffect(() => {
+                if (isOpen) {
+                    fetchRules();
+                    setFormState({ id: '', pattern: '', severity: 'High', description: '' });
+                    setIsEditing(false);
+                    setFormMessage({ text: '', type: '' });
+                }
+            }, [isOpen, fetchRules]);
+
+            const handleFormChange = (e) => setFormState({ ...formState, [e.target.name]: e.target.value });
+
+            const handleEdit = (id, ruleData) => {
+                setFormState({ id: id, pattern: ruleData.pattern, severity: ruleData.severity || 'High', description: ruleData.description || '' });
+                setIsEditing(true);
+            };
+
+            const handleFormSubmit = async (e) => {
+                e.preventDefault();
+                setIsLoading(true);
+                const { id, pattern, severity, description } = formState;
+                try {
+                    const response = await fetch(`${API_BASE_URL}/rules/${id}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ pattern, severity, description }),
+                    });
+                    const data = await response.json();
+                    if (response.ok && data.status === 'success') {
+                        setFormMessage({ text: data.message, type: 'success' });
+                        fetchRules(); 
+                        onRuleChange(); 
+                        setFormState({ id: '', pattern: '', severity: 'High', description: '' });
+                        setIsEditing(false);
+                    } else {
+                        setFormMessage({ text: data.error, type: 'error' });
+                    }
+                } catch (err) { setFormMessage({ text: 'API Error', type: 'error' }); } finally { setIsLoading(false); }
+            };
+            
+            const handleDelete = async (id) => {
+                if (!window.confirm(`Delete rule: ${id}?`)) return;
+                setIsLoading(true);
+                try {
+                    const response = await fetch(`${API_BASE_URL}/rules/${id}`, { method: 'DELETE' });
+                    if (response.ok) { fetchRules(); onRuleChange(); }
+                } catch (err) { console.error(err); } finally { setIsLoading(false); }
+            };
+
+            if (!isOpen) return null;
+
+            return (
+                <div className="fixed inset-0 bg-gray-900 bg-opacity-80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="bg-gray-800 rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto border border-gray-700">
+                        <div className="flex justify-between items-center p-6 border-b border-gray-700 sticky top-0 bg-gray-800 z-10">
+                            <h2 className="text-2xl font-bold text-blue-400 flex items-center"><Settings className="w-6 h-6 mr-2" />Rule Management</h2>
+                            <button onClick={onClose} className="text-gray-400 hover:text-white"><X className="w-6 h-6" /></button>
+                        </div>
+                        <div className="p-6 grid md:grid-cols-3 gap-6">
+                            <div className="md:col-span-2 space-y-4">
+                                <h3 className="text-xl font-semibold text-white border-b border-gray-700 pb-2">{isEditing ? `Edit: ${formState.id}` : 'Create New Rule'}</h3>
+                                {formMessage.text && <div className={`p-3 text-sm rounded ${formMessage.type === 'success' ? 'bg-green-700' : 'bg-red-700'} text-white`}>{formMessage.text}</div>}
+                                <form onSubmit={handleFormSubmit} className="space-y-4">
+                                    <div className="flex space-x-4">
+                                        <div className="flex-1"><label className="block text-sm text-gray-400">Rule ID</label><input type="text" name="id" value={formState.id} onChange={handleFormChange} className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded text-white" disabled={isEditing || isLoading}/></div>
+                                        <div className="w-1/3"><label className="block text-sm text-gray-400">Severity</label><select name="severity" value={formState.severity} onChange={handleFormChange} className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded text-white"><option>Critical</option><option>High</option><option>Low</option></select></div>
+                                    </div>
+                                    <div><label className="block text-sm text-gray-400">Regex</label><textarea name="pattern" value={formState.pattern} onChange={handleFormChange} className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded text-white font-mono text-xs" rows="3"/></div>
+                                    <button type="submit" className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50" disabled={isLoading}>{isEditing ? 'Save' : 'Create'}</button>
+                                </form>
+                            </div>
+                            <div className="md:col-span-1 border-l border-gray-700 pl-6">
+                                <h3 className="text-xl font-semibold text-white mb-4">Current Rules</h3>
+                                <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
+                                    {Object.entries(rules).map(([id, rule]) => (
+                                        <div key={id} className="p-3 bg-gray-700/50 rounded border border-gray-700">
+                                            <div className="flex justify-between"><span className="font-bold text-white text-xs">{id}</span><div className="flex space-x-1"><button onClick={() => handleEdit(id, rule)} className="text-blue-400 text-xs">Edit</button><button onClick={() => handleDelete(id)} className="text-red-400 text-xs"><Trash2 className="w-3 h-3"/></button></div></div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // --- Main App ---
+        const App = () => {
+          const appId = 'secure-scan-app-1234'; 
+          // FIX: Initial state is empty string to prevent auto-scan of bad URL on load
+          const [directoryPath, setDirectoryPath] = useState(''); 
+          const [findings, setFindings] = useState([]);
+          const [isScanning, setIsScanning] = useState(false);
+          const [error, setError] = useState(null);
+          const [lastScanTimestamp, setLastScanTimestamp] = useState(null);
+          const [scannedPath, setScannedPath] = useState(null);
+          const [isRulesModalOpen, setIsRulesModalOpen] = useState(false);
+          
+          const { totalFindings, criticalFindings, highFindings } = useMemo(() => {
+            return { 
+                totalFindings: findings.length, 
+                criticalFindings: findings.filter(f => f.severity === 'Critical').length, 
+                highFindings: findings.filter(f => f.severity === 'High').length 
+            };
+          }, [findings]);
+
+          const runApiScan = useCallback(async (showMessage = true) => {
+            if (isScanning || !directoryPath) return; // Don't scan if path is empty
+            setIsScanning(true);
+            setError(null);
+            setScannedPath(null); 
+            if (lastScanTimestamp) setFindings([]);
+
+            // Using 'target' as agreed
+            const payload = { target: directoryPath };
+            const API_URL = `${API_BASE_URL}/scan`;
+
+            try {
+              const response = await fetch(API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+              });
+              const data = await response.json();
+
+              if (!response.ok || data.status === 'error') throw new Error(data.error || `API Error`);
+
+              setFindings(data.findings || []);
+              setLastScanTimestamp(Date.now());
+              setScannedPath(data.scanned_path);
+
+              if (showMessage) {
+                const msgBox = document.getElementById('message-box');
+                msgBox.innerText = `Found ${data.findings_count} secrets.`;
+                msgBox.className = 'fixed top-4 right-4 z-50 p-3 rounded-lg shadow-xl text-sm font-semibold bg-green-600 text-white opacity-100 transition-opacity duration-300';
+                setTimeout(() => msgBox.className += ' opacity-0', 3000);
+              }
+            } catch (err) {
+              console.error(err);
+              setError(`${err.message}`);
+              const msgBox = document.getElementById('message-box');
+              msgBox.innerText = `Error: ${err.message}`;
+              msgBox.className = 'fixed top-4 right-4 z-50 p-3 rounded-lg shadow-xl text-sm font-semibold bg-red-600 text-white opacity-100 transition-opacity duration-300';
+              setTimeout(() => msgBox.className += ' opacity-0', 5000);
+              setFindings([]); 
+            } finally {
+              setIsScanning(false);
+            }
+          }, [directoryPath, isScanning, lastScanTimestamp]);
+          
+          const handleRuleChange = () => { if(directoryPath) runApiScan(false); };
+
+          // Auto-scan only if path is pre-filled (which it isn't now, so this won't run on load)
+          useEffect(() => {
+            if (directoryPath && findings.length === 0 && !lastScanTimestamp) {
+                runApiScan();
+            }
+          }, []); // Run only once on mount
+
+          return (
+            <div className="min-h-screen bg-gray-900 text-white font-sans p-4 sm:p-8">
+              <div id="message-box" className="fixed top-4 right-4 z-50 p-3 rounded-lg shadow-xl text-sm font-semibold bg-green-600 text-white opacity-0 transition-opacity duration-300"></div>
+              <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-gray-700 pb-4 mb-8">
+                <h1 className="text-3xl font-extrabold text-blue-400 flex items-center"><Zap className="w-8 h-8 mr-2 text-yellow-500" />SecureScan Dashboard</h1>
+                <div className="mt-4 sm:mt-0 flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3 w-full sm:w-auto">
+                    <button onClick={() => setIsRulesModalOpen(true)} className="px-4 py-2 rounded-lg text-sm font-semibold shadow-md bg-gray-700 hover:bg-gray-600 text-white flex items-center" disabled={isScanning}><Settings className="w-4 h-4 inline mr-2" />Rules</button>
+                    <div className="relative flex-grow">
+                        <input type="text" placeholder="Enter GitHub URL or local folder" value={directoryPath} onChange={(e) => setDirectoryPath(e.target.value)} className="w-full px-4 py-2 pl-10 bg-gray-800 border border-gray-700 rounded-lg text-sm text-white focus:border-blue-500" disabled={isScanning} />
+                        <GitBranch className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
+                    </div>
+                    <button onClick={() => runApiScan(true)} disabled={isScanning || !directoryPath} className={`px-4 py-2 rounded-lg text-sm font-semibold shadow-md flex items-center justify-center ${isScanning ? 'bg-gray-600' : 'bg-blue-600 hover:bg-blue-700'}`}>{isScanning ? <Loader2 className="w-4 h-4 inline mr-2 animate-spin" /> : <RefreshCw className="w-4 h-4 inline mr-2" />}{isScanning ? 'Scanning...' : 'Scan'}</button>
+                </div>
+              </header>
+              <RuleManagementModal isOpen={isRulesModalOpen} onClose={() => setIsRulesModalOpen(false)} onRuleChange={handleRuleChange}/>
+              {error && <div className="p-4 mb-6 text-sm text-red-100 bg-red-800 rounded-lg border border-red-700 flex items-center"><AlertTriangle className="w-5 h-5 mr-3" /><p>{error}</p></div>}
+              <section className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
+                <RepoCard icon={<GitBranch />} title="Scanned Path" value={isScanning && directoryPath.startsWith('http') ? 'Cloning...' : (scannedPath || 'N/A')} detail="Target" color="text-blue-400" />
+                <RepoCard icon={<AlertTriangle />} title="Critical" value={criticalFindings} detail="Action Needed" color="text-red-400" />
+                <RepoCard icon={<Zap />} title="Total" value={totalFindings} detail={`High: ${highFindings}`} color="text-yellow-400" />
+                <RepoCard icon={<Clock />} title="Last Scan" value={lastScanTimestamp ? formatTimeAgo(lastScanTimestamp) : 'Never'} detail="Time ago" color="text-green-400" />
+              </section>
+              <section className="bg-gray-800 rounded-xl shadow-2xl p-6 border border-gray-700">
+                <div className="flex justify-between items-center mb-4"><h2 className="text-xl font-semibold text-white">Findings</h2><span className="text-sm text-gray-500">Count: {totalFindings}</span></div>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-700">
+                    <thead><tr className="text-left text-xs font-medium text-gray-400 uppercase bg-gray-700/50"><th className="px-4 py-3">#</th><th className="px-4 py-3">File</th><th className="px-4 py-3">Type</th><th className="px-4 py-3">Severity</th><th className="px-4 py-3">Status</th><th className="px-4 py-3">Context</th><th className="px-4 py-3">Action</th></tr></thead>
+                    <tbody className="divide-y divide-gray-700/50">{findings.length > 0 ? findings.map((leak, index) => <LeakRow key={index} leak={leak} index={index} />) : <tr><td colSpan="7" className="text-center py-8 text-gray-500">{isScanning ? "Scanning..." : "No findings."}</td></tr>}</tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+          );
+        };
+
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</head>
+<body class="bg-gray-900">
+    <div id="root"></div>
+</body>
+</html>

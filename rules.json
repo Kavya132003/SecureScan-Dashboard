@@ -1,0 +1,52 @@
+{
+  "AWS_ACCESS_KEY_ID": {
+    "pattern": "(A3T[A-Z0-9]|AKIA|AGPA|AIDA|AROA)[A-Z0-9]{16}",
+    "severity": "Critical",
+    "description": "Pattern matching AWS Access Key IDs, often found in environment configs or credentials files."
+  },
+  "SSH_PRIVATE_KEY_HEADER": {
+    "pattern": "-----BEGIN (RSA|DSA|EC|OPENSSH) PRIVATE KEY-----",
+    "severity": "Critical",
+    "description": "Header indicating the presence of a private cryptographic key."
+  },
+  "GENERIC_PASSWORD_ASSIGNMENT": {
+    "pattern": "(URL|URI|DB|DATABASE|API|AUTH|PASS|PWD|SECRET|KEY|TOKEN)[=_:\\s'\"]+.*",
+    "severity": "High",
+    "description": "General pattern looking for common variable names associated with secrets."
+  },
+  "SLACK_WEBHOOK_URL": {
+    "pattern": "https://hooks\\.slack\\.com/services/T[a-zA-Z0-9_]{8}/B[a-zA-Z0-9_]{8}/[a-zA-Z0-9_]{24}",
+    "severity": "High",
+    "description": "Specific URL pattern for Slack integration webhooks."
+  },
+  "GCP_SERVICE_ACCOUNT_KEY": {
+    "pattern": "\"type\": \"service_account\"",
+    "severity": "High",
+    "description": "Indicates a Google Cloud Platform service account JSON key is present."
+  },
+  "EMAIL_ADDRESS": {
+    "pattern": "[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}",
+    "severity": "Low",
+    "description": "Detection of common email address formats."
+  },
+  "US_SOCIAL_SECURITY_NUMBER": {
+    "pattern": "\\b\\d{3}-\\d{2}-\\d{4}\\b",
+    "severity": "Critical",
+    "description": "Detection of US Social Security Numbers (SSN) in the XXX-XX-XXXX format."
+  },
+  "GITHUB_PERSONAL_ACCESS_TOKEN": {
+    "pattern": "(ghp|ghs|gho)_[a-zA-Z0-9]{36}",
+    "severity": "Critical",
+    "description": "Detection of modern GitHub Personal Access Tokens (PAT) starting with ghp_, ghs_, or gho_."
+  },
+  "AZURE_STORAGE_KEY": {
+    "pattern": "\\b[a-zA-Z0-9+/]{88}==\\b",
+    "severity": "Critical",
+    "description": "Detection of Azure Storage Account Keys (88 characters, Base64-encoded, ends with ==)."
+  },
+  "STRIPE_SECRET_KEY": {
+    "pattern": "(sk_live_|sk_test_)[0-9a-zA-Z]{24,}",
+    "severity": "High",
+    "description": "Detection of Stripe Secret API Keys (live or test). These control payment processing."
+  }
+}
